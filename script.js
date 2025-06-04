@@ -1,61 +1,74 @@
-function calculate() {
-  const symbol = document.getElementById("symbol").value.trim();
-  const buyPrice = parseFloat(document.getElementById("buyPrice").value);
-  const sellPrice = parseFloat(document.getElementById("sellPrice").value);
-  const quantity = parseInt(document.getElementById("quantity").value);
-  const broker = document.getElementById("broker").value;
-  const tradeType = document.getElementById("tradeType").value;
+let portfolio = JSON.parse(localStorage.getItem('portfolio')) || {};
 
-  if (!symbol || isNaN(buyPrice) || isNaN(sellPrice) || isNaN(quantity)) {
-    alert("Fill all fields correctly.");
+function calculateTrade() {
+  const symbol = document.getElementById('symbol').value.trim().toUpperCase();
+  const type = document.getElementById('transactionType').value;
+  const price = parseFloat(document.getElementById('price').value);
+  const quantity = parseInt(document.getElementById('quantity').value);
+  const broker = document.getElementById('broker').value;
+  const tradeType = document.getElementById('tradeType').value;
+
+  if (!symbol || isNaN(price) || isNaN(quantity) || quantity <= 0 || price <= 0) {
+    alert("Please enter valid details.");
     return;
   }
 
-  const buyValue = buyPrice * quantity;
-  const sellValue = sellPrice * quantity;
-  const turnover = buyValue + sellValue;
-  const grossPL = sellValue - buyValue;
-
-  let brokerage = 0, stt = 0, exchTxn = 0.0000345 * turnover, sebi = 0.000001 * turnover, gst = 0, stampDuty = 0, dpCharge = 0;
-
-  if (tradeType === 'intraday') {
-    brokerage = Math.min(20, 0.0003 * turnover);
-    stt = 0.00025 * turnover;
-    stampDuty = 0.00003 * buyValue;
-  } else {
-    stt = 0.001 * sellValue;
-    stampDuty = 0.00015 * buyValue;
-    dpCharge = 13.5;
+  let charges = 0;
+  let grossPL = 0;
+  let netPL = 0;
+  if (type === 'sell') {
+    const match = (portfolio[symbol] || []).slice();
+    let remaining = quantity;
+    let totalCost = 0;
+    while (match.length && remaining > 0) {
+      const lot = match[0];
+      const used = Math.min(lot.quantity, remaining);
+      totalCost += used * lot.price;
+      lot.quantity -= used;
+      if (lot.quantity === 0) match.shift();
+      remaining -= used;
+    }
+    grossPL = price * quantity - totalCost;
+    const turnover = price * quantity + totalCost;
+    charges = (0.0000345 + 0.000001) * turnover;
+    const net = grossPL - charges;
+    netPL = net.toFixed(2);
   }
 
-  gst = 0.18 * (brokerage + exchTxn);
-  const totalCharges = brokerage + stt + exchTxn + sebi + gst + stampDuty + dpCharge;
-  const netPL = grossPL - totalCharges;
+  const result = document.getElementById('result');
+  result.innerHTML = (type === 'buy')
+    ? `Buy Entry: ₹${price} × ${quantity} = ₹${(price * quantity).toFixed(2)}`
+    : (grossPL >= 0
+      ? `Profit of ₹${grossPL.toFixed(2)}<br>Charges: ₹${charges.toFixed(2)}<br>Net Profit: ₹${netPL}`
+      : `Loss of ₹${Math.abs(grossPL).toFixed(2)}<br>Charges: ₹${charges.toFixed(2)}<br>Net Loss: ₹${Math.abs(netPL)}`);
 
-  const resultContainer = document.getElementById("resultContainer");
-  const summary = netPL >= 0 ? `Profit of ₹${netPL.toFixed(2)}` : `Loss of ₹${Math.abs(netPL).toFixed(2)}`;
-  resultContainer.innerHTML = `
-    <p><strong>Gross P&L:</strong> ₹${grossPL.toFixed(2)}</p>
-    <p><strong>Total Charges:</strong> ₹${totalCharges.toFixed(2)}</p>
-    <p><strong>Net P&L:</strong> ${summary}</p>
-    <button onclick="addToPortfolio()">✅ Add to Portfolio</button>
-  `;
-  resultContainer.style.display = "block";
+  result.style.display = 'block';
+  document.getElementById('addButton').style.display = 'inline-block';
 }
 
-function addToPortfolio() {
-  const symbol = document.getElementById("symbol").value.trim();
-  const buyPrice = parseFloat(document.getElementById("buyPrice").value);
-  const sellPrice = parseFloat(document.getElementById("sellPrice").value);
-  const quantity = parseInt(document.getElementById("quantity").value);
-  const tradeType = document.getElementById("tradeType").value;
+function addTrade() {
+  const symbol = document.getElementById('symbol').value.trim().toUpperCase();
+  const type = document.getElementById('transactionType').value;
+  const price = parseFloat(document.getElementById('price').value);
+  const quantity = parseInt(document.getElementById('quantity').value);
 
-  const portfolio = JSON.parse(localStorage.getItem("portfolioLog")) || [];
-  portfolio.push({ symbol, buyPrice, sellPrice, quantity, tradeType });
-  localStorage.setItem("portfolioLog", JSON.stringify(portfolio));
-  alert("Trade added to portfolio!");
+  if (type === 'buy') {
+    if (!portfolio[symbol]) portfolio[symbol] = [];
+    portfolio[symbol].push({ price, quantity });
+    localStorage.setItem('portfolio', JSON.stringify(portfolio));
+    alert("Buy trade saved to portfolio.");
+  } else {
+    alert("Sell trade is only used for calculation, not stored.");
+  }
+
+  location.reload();
 }
 
-function goToPortfolioPage() {
-  window.location.href = "portfolio.html";
+if (document.getElementById('portfolioContent')) {
+  const container = document.getElementById('portfolioContent');
+  container.innerHTML = '';
+  for (const [symbol, buys] of Object.entries(portfolio)) {
+    const rows = buys.map(b => `<tr><td>${symbol}</td><td>Buy</td><td>₹${b.price.toFixed(2)}</td><td>${b.quantity}</td></tr>`).join("");
+    container.innerHTML += `<table><thead><tr><th>Symbol</th><th>Type</th><th>Price</th><th>Quantity</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
 }

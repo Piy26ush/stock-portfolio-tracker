@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stock Calculator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="calculator" id="app">
+    <h1>📊 Stock Trade Calculator</h1>
+
+    <label>Stock Symbol: <input type="text" id="symbol" placeholder="e.g. TCS" /></label>
+    <label>Transaction Type:
+      <select id="transactionType">
+        <option value="buy">Buy</option>
+        <option value="sell">Sell</option>
+      </select>
+    </label>
+    <label>Price: <input type="number" id="price" /></label>
+    <label>Quantity: <input type="number" id="quantity" /></label>
+    <label>Broker:
+      <select id="broker">
+        <option value="groww">Groww</option>
+        <option value="angel">Angel One</option>
+      </select>
+    </label>
+    <label>Trade Type:
+      <select id="tradeType">
+        <option value="delivery">Delivery</option>
+        <option value="intraday">Intraday</option>
+      </select>
+    </label>
+    <button onclick="calculateTrade()">Calculate</button>
+
+    <div class="result" id="result" style="display:none;"></div>
+    <button id="addButton" onclick="addTrade()" style="display:none;">📥 Save to Portfolio</button>
+    <a href="portfolio.html"><button class="go-to">📁 View My Portfolio</button></a>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
