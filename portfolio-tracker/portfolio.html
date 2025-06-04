@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Portfolio</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="calculator" id="app">
+    <h1>📈 Portfolio Tracker</h1>
+    <table id="portfolioTable">
+      <thead>
+        <tr>
+          <th>Symbol</th>
+          <th>Buy</th>
+          <th>Sell</th>
+          <th>Qty</th>
+          <th>Type</th>
+          <th>Gross</th>
+          <th>Charges</th>
+          <th>Net</th>
+        </tr>
+      </thead>
+      <tbody id="portfolioBody"></tbody>
+    </table>
+    <div class="total-profit" id="totalProfit"></div>
+  </div>
+  <script>
+    const portfolio = JSON.parse(localStorage.getItem("portfolioLog")) || [];
+
+    function calculatePL(trade) {
+      const { buyPrice, sellPrice, quantity, tradeType } = trade;
+      const buyValue = buyPrice * quantity;
+      const sellValue = sellPrice * quantity;
+      const turnover = buyValue + sellValue;
+      const grossPL = sellValue - buyValue;
+      let brokerage = 0;
+      let stt = 0;
+      let exchTxn = 0.0000345 * turnover;
+      let sebi = 0.000001 * turnover;
+      let gst = 0;
+      let stampDuty = 0;
+      let dpCharge = 0;
+
+      if (tradeType === 'intraday') {
+        brokerage = Math.min(20, 0.0003 * turnover);
+        stt = 0.00025 * turnover;
+        stampDuty = 0.00003 * buyValue;
+      } else {
+        stt = 0.001 * sellValue;
+        stampDuty = 0.00015 * buyValue;
+        dpCharge = 13.5;
+      }
+
+      gst = 0.18 * (brokerage + exchTxn);
+      const totalCharges = brokerage + stt + exchTxn + sebi + gst + stampDuty + dpCharge;
+      const netPL = grossPL - totalCharges;
+
+      return { grossPL, totalCharges, netPL };
+    }
+
+    function renderPortfolio() {
+      const tbody = document.getElementById("portfolioBody");
+      tbody.innerHTML = "";
+      let totalNet = 0;
+
+      portfolio.forEach(entry => {
+        const { grossPL, totalCharges, netPL } = calculatePL(entry);
+        totalNet += netPL;
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${entry.symbol}</td>
+          <td>${entry.buyPrice}</td>
+          <td>${entry.sellPrice}</td>
+          <td>${entry.quantity}</td>
+          <td>${entry.tradeType}</td>
+          <td>₹${grossPL.toFixed(2)}</td>
+          <td>₹${totalCharges.toFixed(2)}</td>
+          <td>₹${netPL.toFixed(2)}</td>
+        `;
+        tbody.appendChild(row);
+      });
+
+      document.getElementById("totalProfit").innerText = `Total Net P&L: ₹${totalNet.toFixed(2)}`;
+    }
+
+    renderPortfolio();
+  </script>
+</body>
+</html>

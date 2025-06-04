@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stock P&L Calculator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="calculator" id="app">
+    <h1>📊 Stock Profit & Loss Calculator</h1>
+
+    <label>Stock Symbol: <input type="text" id="symbol" placeholder="e.g. TCS" /></label>
+    <label>Buy Price: <input type="number" id="buyPrice" /></label>
+    <label>Sell Price: <input type="number" id="sellPrice" /></label>
+    <label>Quantity: <input type="number" id="quantity" /></label>
+    <label>Broker:
+      <select id="broker">
+        <option value="groww">Groww</option>
+        <option value="angel">Angel One</option>
+      </select>
+    </label>
+    <label>Trade Type:
+      <select id="tradeType">
+        <option value="delivery">Delivery</option>
+        <option value="intraday">Intraday</option>
+      </select>
+    </label>
+    <button onclick="calculate()">Calculate</button>
+
+    <div id="resultContainer" style="display:none; margin-top: 20px;"></div>
+
+    <div style="text-align: center; margin-top: 30px;">
+      <button onclick="goToPortfolioPage()">📈 Track My Trades</button>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
